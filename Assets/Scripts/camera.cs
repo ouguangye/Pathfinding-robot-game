@@ -20,6 +20,7 @@ public class camera : MonoBehaviour
 
     // 静态障碍物预设体
     public GameObject cube;
+    public GameObject movingCube;
     // 终点
     public GameObject distinationObject;
 
@@ -32,9 +33,9 @@ public class camera : MonoBehaviour
     // z = (j-mapsize/2+1)*cubeLength
     int[,] map;
 
-    // 传入的x,z 是中心点坐标
+    // 传入二维数据的i,j值，放回物体的中心坐标
     Vector3 mapToPoint(int i, int j) {
-        return new Vector3((i-mapsize/2)*cubeLength,2.5f,(j-mapsize/2+1)*cubeLength);
+        return new Vector3((i-mapsize/2)*cubeLength+cubeLength/2,2.5f,(j-mapsize/2+1)*cubeLength-cubeLength/2);
     }
 
     // 接收物体的x, z值
@@ -42,7 +43,96 @@ public class camera : MonoBehaviour
         // 将中心坐标转换为左上角的坐标
         int point_x = (int)(x - cubeLength/2);
         int point_z = (int)(z + cubeLength/2);
+
         map[point_x/(int)cubeLength+mapsize/2, point_z/(int)cubeLength+mapsize/2-1] = 1;
+    }
+
+    void createHorizontalMoveObstract() {
+        int maxLen = 0;
+        int max_i = 0 , max_j = 0;
+
+        // 寻找一行中 最长可运动的 区域
+        for(int i = 0;i<mapsize;i++) {
+            int len = 0;
+            bool flag = false;
+            for(int j = 0 ; j<mapsize;j++) {
+                if(map[i,j] == 1){
+                    if(!flag) continue;
+                    if(len > maxLen) {
+                        maxLen = len;
+                        max_i = i;
+                        max_j = j-1;
+                    }
+                    len = 0;
+                    flag = false;
+                    continue;
+                }
+                flag = true;
+                len++;
+            }
+            if(len > maxLen) {
+                maxLen = len;
+                max_i = i;
+                max_j = mapsize-1;
+            }
+        }
+
+        Debug.Log(max_i + " " + max_j + " " + maxLen);
+        for (int i = 1; i<=maxLen;i++){
+            map[max_i, max_j-i+1] = 1;
+        }
+
+        // Debug.Log("len: " + maxLen);
+        GameObject m_cube = Instantiate(
+            movingCube,
+            mapToPoint(max_i,max_j-maxLen+1),  
+            Quaternion.identity
+        );
+        m_cube.GetComponent<movingObstacle>().endPoint = mapToPoint(max_i,max_j);
+    }
+
+    void createVerticalMoveObstract() {
+        int maxLen = 0;
+        int max_i = 0 , max_j = 0;
+
+        // 寻找一行中 最长可运动的 区域
+        for(int i = 0;i<mapsize;i++) {
+            int len = 0;
+            bool flag = false;
+            for(int j = 0 ; j<mapsize;j++) {
+                if(map[j,i] == 1){
+                    if(!flag) continue;
+                    if(len > maxLen) {
+                        maxLen = len;
+                        max_i = i;
+                        max_j = j-1;
+                    }
+                    len = 0;
+                    flag = false;
+                    continue;
+                }
+                flag = true;
+                len++;
+            }
+            if(len > maxLen) {
+                maxLen = len;
+                max_i = i;
+                max_j = mapsize-1;
+            }
+        }
+
+        Debug.Log(max_i + " " + max_j + " " + maxLen);
+        for (int i = 1; i<=maxLen;i++){
+            map[max_j-i+1, max_i] = 1;
+        }
+
+        // Debug.Log("len: " + maxLen);
+        GameObject m_cube = Instantiate(
+            movingCube,
+            mapToPoint(max_j-maxLen+1,max_i),  
+            Quaternion.identity
+        );
+        m_cube.GetComponent<movingObstacle>().endPoint = mapToPoint(max_j,max_i);
     }
 
     // Use this for initialization
@@ -94,32 +184,11 @@ public class camera : MonoBehaviour
         }
 
         // 生成动态障碍物
-        int maxLen = 0;
-        int max_i, max_j;
-        for(int i = 0;i<mapsize;i++) {
-            int len = 0;
-            bool flag = false;
-            for(int j = 0 ; j<mapsize;j++) {
-                if(map[i,j] == 0){
-                    if(!flag) continue;
-                    if(len <= maxLen) {
-                        len = 0;
-                    }
-                    else {
-                        maxLen = len;
-                        max_i = i;
-                        max_j = j;
-                    }
-                }
-                flag = true;
-                len++;
-            }
-            if(len > maxLen) {
-                maxLen = len;
-                max_i = i;
-                max_j = 19;
-            }
-        }
+        createHorizontalMoveObstract();
+        createVerticalMoveObstract();
+        
+        createHorizontalMoveObstract();
+        createVerticalMoveObstract();
     }
 
     void Update()
