@@ -27,112 +27,27 @@ public class camera : MonoBehaviour
     // 障碍物的长度大小
     private float cubeLength;
 
-    // 二维地图存的是每个方块左上角的点
-    // 二维地图和世界地图坐标转换关系为： 
-    // x = (i-mapsize/2)*cubeLength 
-    // z = (j-mapsize/2+1)*cubeLength
-    int[,] map;
-
-    // 传入二维数据的i,j值，放回物体的中心坐标
-    Vector3 mapToPoint(int i, int j) {
-        return new Vector3((i-mapsize/2)*cubeLength+cubeLength/2,2.5f,(j-mapsize/2+1)*cubeLength-cubeLength/2);
-    }
-
-    // 接收物体的x, z值
-    void pointFillMap(float x, float z) {
-        // 将中心坐标转换为左上角的坐标
-        int point_x = (int)(x - cubeLength/2);
-        int point_z = (int)(z + cubeLength/2);
-
-        map[point_x/(int)cubeLength+mapsize/2, point_z/(int)cubeLength+mapsize/2-1] = 1;
-    }
+    RobotMap robot_map;
 
     void createHorizontalMoveObstract() {
-        int maxLen = 0;
-        int max_i = 0 , max_j = 0;
-
-        // 寻找一行中 最长可运动的 区域
-        for(int i = 0;i<mapsize;i++) {
-            int len = 0;
-            bool flag = false;
-            for(int j = 0 ; j<mapsize;j++) {
-                if(map[i,j] == 1){
-                    if(!flag) continue;
-                    if(len > maxLen) {
-                        maxLen = len;
-                        max_i = i;
-                        max_j = j-1;
-                    }
-                    len = 0;
-                    flag = false;
-                    continue;
-                }
-                flag = true;
-                len++;
-            }
-            if(len > maxLen) {
-                maxLen = len;
-                max_i = i;
-                max_j = mapsize-1;
-            }
-        }
-
-        Debug.Log(max_i + " " + max_j + " " + maxLen);
-        for (int i = 1; i<=maxLen;i++){
-            map[max_i, max_j-i+1] = 1;
-        }
-
-        // Debug.Log("len: " + maxLen);
+        Vector3 res =  robot_map.findLongestPathFromHorizontal();
         GameObject m_cube = Instantiate(
             movingCube,
-            mapToPoint(max_i,max_j-maxLen+1),  
+            robot_map.mapToPoint((int)(res[0]),(int)(res[1]-res[2]+1)),  
             Quaternion.identity
         );
-        m_cube.GetComponent<movingObstacle>().endPoint = mapToPoint(max_i,max_j);
+        m_cube.GetComponent<movingObstacle>().endPoint = robot_map.mapToPoint((int)res[0],(int)res[1]);
     }
 
     void createVerticalMoveObstract() {
-        int maxLen = 0;
-        int max_i = 0 , max_j = 0;
-
-        // 寻找一行中 最长可运动的 区域
-        for(int i = 0;i<mapsize;i++) {
-            int len = 0;
-            bool flag = false;
-            for(int j = 0 ; j<mapsize;j++) {
-                if(map[j,i] == 1){
-                    if(!flag) continue;
-                    if(len > maxLen) {
-                        maxLen = len;
-                        max_i = i;
-                        max_j = j-1;
-                    }
-                    len = 0;
-                    flag = false;
-                    continue;
-                }
-                flag = true;
-                len++;
-            }
-            if(len > maxLen) {
-                maxLen = len;
-                max_i = i;
-                max_j = mapsize-1;
-            }
-        }
-
-        Debug.Log(max_i + " " + max_j + " " + maxLen);
-        for (int i = 1; i<=maxLen;i++){
-            map[max_j-i+1, max_i] = 1;
-        }
-
+        Vector3 res =  robot_map.findLongestPathFromVertical();
         // Debug.Log("len: " + maxLen);
         GameObject m_cube = Instantiate(
             movingCube,
-            mapToPoint(max_j-maxLen+1,max_i),  
+            robot_map.mapToPoint((int)(res[1]-res[2]+1),(int)(res[0])),  
             Quaternion.identity
         );
-        m_cube.GetComponent<movingObstacle>().endPoint = mapToPoint(max_j,max_i);
+        m_cube.GetComponent<movingObstacle>().endPoint = robot_map.mapToPoint((int)res[1],(int)res[0]);
     }
 
     // Use this for initialization
@@ -145,8 +60,10 @@ public class camera : MonoBehaviour
         Vector3 size = target.transform.GetComponent<BoxCollider>().bounds.size;
         Debug.Log("size: " + size);
 
-        // 初始化map, 一律统计方块左上角的点
-        map = new int[mapsize,mapsize];
+        // 初始化map
+        robot_map = new RobotMap(mapsize, (int)cubeLength);
+        robot_map.map = new int[mapsize,mapsize];
+
         obstacleNum = mapsize*mapsize/5;
 
         // 对于目标节点， 在地图的四个角的任意一个角上
@@ -155,11 +72,11 @@ public class camera : MonoBehaviour
            {0,0},{0,mapsize-1},{mapsize-1,0},{mapsize-1,mapsize-1}
         };
 
-        distinationObject.transform.position = mapToPoint(remote_loc_list[index,0], remote_loc_list[index, 1]);
-        target.transform.position = mapToPoint(remote_loc_list[3-index,0], remote_loc_list[3-index, 1]);
+        distinationObject.transform.position = robot_map.mapToPoint(remote_loc_list[index,0], remote_loc_list[index, 1]);
+        target.transform.position = robot_map.mapToPoint(remote_loc_list[3-index,0], remote_loc_list[3-index, 1]);
 
-        map[remote_loc_list[index,0], remote_loc_list[index, 1]] = 1;
-        map[remote_loc_list[3-index,0], remote_loc_list[3-index, 1]] = 1;
+        robot_map.map[remote_loc_list[index,0], remote_loc_list[index, 1]] = 1;
+        robot_map.map[remote_loc_list[3-index,0], remote_loc_list[3-index, 1]] = 1;
         
 
         // 生成静态障碍物
@@ -172,23 +89,22 @@ public class camera : MonoBehaviour
             {
                 x = Random.Range(0, mapsize);
                 z = Random.Range(0, mapsize);
-                if(map[x,z] == 0) break;
+                if(robot_map.map[x,z] == 0) break;
             }
 
             Instantiate(
                 cube, 
-                mapToPoint(x,z), 
+                robot_map.mapToPoint(x,z), 
                 Quaternion.identity
             );
-            map[x,z] = 1;
+            robot_map.map[x,z] = 1;
         }
 
-        // 生成动态障碍物
-        createHorizontalMoveObstract();
-        createVerticalMoveObstract();
-        
-        createHorizontalMoveObstract();
-        createVerticalMoveObstract();
+        // 生成4个动态障碍物
+        for(int i=0;i<2;i++) {
+            createHorizontalMoveObstract();
+            createVerticalMoveObstract();
+        }
     }
 
     void Update()
