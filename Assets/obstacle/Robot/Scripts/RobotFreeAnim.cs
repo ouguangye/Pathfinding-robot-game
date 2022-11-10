@@ -5,7 +5,7 @@ using UnityEngine;
 public class RobotFreeAnim : MonoBehaviour {
 
 	// 决定使用何种方法
-	public int mode = 2; // 0 -> APF, 1 -> AStar, 2 -> Mix
+	public int mode = 0; // 0 -> APF, 1 -> AStar, 2 -> Mix
 
 	// 使用人工势场法
 	public APF apf = new APF();
@@ -134,7 +134,6 @@ public class RobotFreeAnim : MonoBehaviour {
 		anim = gameObject.GetComponent<Animator>();
 		gameObject.transform.eulerAngles = rot;
 		tarRot = rot;
-		gameObject.AddComponent<camera>();
 		normalSpeed = this.mode == 1? 0.4f:6f;
 	}
 
@@ -208,10 +207,11 @@ public class RobotFreeAnim : MonoBehaviour {
 	void forward2(float speed)
 	{
 		anim.SetBool("Walk_Anim", true);
-		transform.position += transform.forward*Time.deltaTime*speed;
+		// transform.position += transform.forward*Time.deltaTime*speed;
 		// float vertical = Input.GetAxis("Vertical");
 		// float horizontal = Input.GetAxis("Horizontal");
 		// transform.Translate(new Vector3(horizontal, 0, vertical) * Time.deltaTime * speed);
+        transform.Translate(Vector3.forward*Time.deltaTime * speed);
 	}
 
 	void CheckKey()

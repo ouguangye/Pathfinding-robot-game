@@ -4,62 +4,53 @@ using UnityEngine;
 
 public class camera : MonoBehaviour
 {
-    public float distanceUp = 4f;//相机与目标的竖直高度参数
-    public float distanceAway = 20f;//相机与目标的水平距离参数
-    public float smooth = 3f;//位置平滑移动插值参数值
-    public float camDepthSmooth = 20f;
-
-    //���������
-    public Transform followObject;
-    //�������λ��
-    Vector3 followVector;
+    public Transform target;
+    public float distance = 10.0f;                  //设置距离
+    public float height = 5.0f;                     //设置高度
+    public float offsetAngleY = 0;                  //观察角度offset
+    float heightDamping = 2.0f;
+    float rotationDamping = 3.0f;
 
 
-    // ��¡�ľ�̬�ϰ���
+
     public GameObject cube;
-    private int num = 100; // ����
+    private int num = 100; 
 
-    // Ŀ�ĵ�
     public GameObject distinationObject;
 
-    // cube�Ĵ�С
     float cubeLength;
 
-    // ��¼�����������������
     public List<Vector3> all_objects_loc_list;
 
     // Use this for initialization
     void Start()
     {
 
-        followVector = this.transform.position - followObject.position;
-
         cubeLength = cube.transform.GetComponent<Renderer>().bounds.size.x;
         all_objects_loc_list = new List<Vector3>();
 
-       // ������� �յ㵽 �������ҵ��ĸ�����ı�Ե����
         int index = Random.Range(0, 4);
         int remote_loc = 90;
         int[,] remote_loc_list = new int[,] { { remote_loc, remote_loc }, { -remote_loc, remote_loc }, { remote_loc, -remote_loc }, { -remote_loc, remote_loc } };
         distinationObject.transform.position = new Vector3(remote_loc_list[index, 0], 2.5f, remote_loc_list[index, 1]);
   
         all_objects_loc_list.Add(distinationObject.transform.position);
-        all_objects_loc_list.Add(followObject.position);
+        all_objects_loc_list.Add(target.position);
 
-        Debug.Log("length: " + cubeLength);
+        // Debug.Log("length: " + cubeLength);
         
         for(int i = 0;i < num; i++)
         {
             float x;
             float z;
 
-            // �ҳ�x, z�ĺ��ʵ����ֵ
+            
             while (true)
             {
                 x = Random.Range(-95, 95);
                 z = Random.Range(-95, 95);
                 bool flag = true;
-                // ���� all_objeccts_loc_list, �жϸ�����ϴεĵ��Ƿ�Ϸ�
+                
                 foreach(Vector3 v in all_objects_loc_list)
                 {
                     if (Mathf.Abs(x-v.x) >= Mathf.Sqrt(2)*cubeLength ||
@@ -75,14 +66,13 @@ public class camera : MonoBehaviour
                     flag = false;
                     break;
                 }
-                // ��������������� ��ô��ֱ��break; ���򣬼���ѭ�����ҵ����ʵ������
+                
                 if (flag)
                 {
                     break;
                 }
             }
 
-            // ��¡����
             Vector3 instantiate_loc = new Vector3(x, 2.5f, z);
             Instantiate(
                 cube, 
@@ -93,22 +83,28 @@ public class camera : MonoBehaviour
         }
     }
 
-void Update()
+    void Update()
     {
-        // 鼠标轴控制相机的远近
-        if ((Input.mouseScrollDelta.y < 0 && Camera.main.fieldOfView >= 3) || Input.mouseScrollDelta.y > 0 && Camera.main.fieldOfView <= 80)
-        {
-            Camera.main.fieldOfView += Input.mouseScrollDelta.y * camDepthSmooth * Time.deltaTime;
-        }
+        
     }
  
     void LateUpdate()
     {
-        //计算出相机的位置
-        Vector3 disPos = followObject.position + Vector3.up * distanceUp - followObject.forward * distanceAway;
- 
-        transform.position = Vector3.Lerp(transform.position, disPos, Time.deltaTime * smooth);
-        //相机的角度
-        transform.LookAt(followObject.position);
+        if(!target)      //保护机制，为空直接结束
+        {
+            return;
+        }
+        
+        float wantedRotationAngle = target.eulerAngles.y+offsetAngleY;     //调整相机观察的角度setAngleY
+        float wantedHeight = target.position.y + height;
+        float currentRotationAngle = transform.eulerAngles.y;
+        float currentHeight = transform.position.y;
+        currentRotationAngle = Mathf.LerpAngle(currentRotationAngle, wantedRotationAngle, rotationDamping * Time.deltaTime);
+        currentHeight = Mathf.Lerp(currentHeight, wantedHeight, heightDamping * Time.deltaTime);
+        Quaternion currentRotation = Quaternion.Euler(0, currentRotationAngle, 0);
+        transform.position = target.position;
+        transform.position -= currentRotation * Vector3.forward * distance;
+        transform.position = new Vector3(transform.position.x, currentHeight, transform.position.z);
+        transform.LookAt(target);
     }
 }
