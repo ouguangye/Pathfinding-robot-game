@@ -1,0 +1,11 @@
+﻿.vs
+Logs
+robot_project.sln
+Assembly-CSharp-Editor.csproj
+Assembly-CSharp.csproj
+.vsconfig
+robot_project1.sln
+Temp
+UserSettings
+Library
+obj
