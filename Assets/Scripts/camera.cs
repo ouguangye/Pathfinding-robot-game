@@ -4,6 +4,13 @@ using UnityEngine;
 
 public class camera : MonoBehaviour
 {
+    // 地图大小
+    public int mapsize = 20;
+    
+    // 障碍物数量
+    private int obstacleNum; 
+
+    // 相机相关参数
     public Transform target;
     public float distance = 10.0f;                  //设置距离
     public float height = 5.0f;                     //设置高度
@@ -11,18 +18,23 @@ public class camera : MonoBehaviour
     float heightDamping = 2.0f;
     float rotationDamping = 3.0f;
 
+    // 静态障碍物预设体
     public GameObject cube;
-    private int num = 100; 
-
+    // 终点
     public GameObject distinationObject;
 
-    float cubeLength;
+    // 障碍物的长度大小
+    private float cubeLength;
 
+    // 二维地图存的是每个方块左上角的点
+    // 二维地图和世界地图坐标转换关系为： 
+    // x = (i-mapsize/2)*cubeLength 
+    // z = (j-mapsize/2+1)*cubeLength
     int[,] map;
 
     // 传入的x,z 是中心点坐标
     Vector3 mapToPoint(int i, int j) {
-        return new Vector3((i-10)*10,2.5f,(j-9)*10);
+        return new Vector3((i-mapsize/2)*cubeLength,2.5f,(j-mapsize/2+1)*cubeLength);
     }
 
     // 接收物体的x, z值
@@ -30,7 +42,7 @@ public class camera : MonoBehaviour
         // 将中心坐标转换为左上角的坐标
         int point_x = (int)(x - cubeLength/2);
         int point_z = (int)(z + cubeLength/2);
-        map[point_x/10+10, point_z/10+9] = 1;
+        map[point_x/(int)cubeLength+mapsize/2, point_z/(int)cubeLength+mapsize/2-1] = 1;
     }
 
     // Use this for initialization
@@ -44,13 +56,13 @@ public class camera : MonoBehaviour
         Debug.Log("size: " + size);
 
         // 初始化map, 一律统计方块左上角的点
-        map = new int[20,20];
+        map = new int[mapsize,mapsize];
+        obstacleNum = mapsize*mapsize/5;
 
         // 对于目标节点， 在地图的四个角的任意一个角上
         int index = Random.Range(0, 4);
-        
         int[,] remote_loc_list = new int[,] {
-           {0,0},{0,19},{19,0},{19,19}
+           {0,0},{0,mapsize-1},{mapsize-1,0},{mapsize-1,mapsize-1}
         };
 
         distinationObject.transform.position = mapToPoint(remote_loc_list[index,0], remote_loc_list[index, 1]);
@@ -61,15 +73,15 @@ public class camera : MonoBehaviour
         
 
         // 生成静态障碍物
-        for(int i = 0;i < num; i++)
+        for(int i = 0;i < obstacleNum; i++)
         {
             int x;
             int z;
             
             while (true)
             {
-                x = Random.Range(0, 19);
-                z = Random.Range(0, 19);
+                x = Random.Range(0, mapsize);
+                z = Random.Range(0, mapsize);
                 if(map[x,z] == 0) break;
             }
 
@@ -84,10 +96,10 @@ public class camera : MonoBehaviour
         // 生成动态障碍物
         int maxLen = 0;
         int max_i, max_j;
-        for(int i = 0;i<20;i++) {
+        for(int i = 0;i<mapsize;i++) {
             int len = 0;
             bool flag = false;
-            for(int j = 0 ; j<20;j++) {
+            for(int j = 0 ; j<mapsize;j++) {
                 if(map[i,j] == 0){
                     if(!flag) continue;
                     if(len <= maxLen) {
