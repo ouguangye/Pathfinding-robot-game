@@ -21,10 +21,6 @@ public class RobotFreeAnim : MonoBehaviour {
 	bool added = false;
 	GameObject distination;
 
-	// 设置的虚拟对象， 用于确定前进方向
-	public GameObject d1;
-	public GameObject d2;
-
 	// 双相机对象
 	public GameObject follow_camera;
 	public GameObject vertical_camera;
@@ -75,19 +71,6 @@ public class RobotFreeAnim : MonoBehaviour {
 	// AStar部分
 	void Refresh(){
 		if(index == path.Count) return ;
-		// int offset = 3;
-		// if(tarArea.Count > 0){
-		// 	if(transform.position.x > tarArea[0].x && transform.position.z > tarArea[0].z 
-		// 	&& transform.position.x < tarArea[1].x && transform.position.z < tarArea[1].z){
-		// 		tarArea[0].x = path[++index].x - offset;
-		// 		tarArea[0].z = path[index].z - offset;
-		// 		tarArea[1].x = path[index].x + offset;
-		// 		tarArea[1].z = path[index].z + offset; 
-		// 	}
-		// } else {
-		// 	tarArea.Add(new Point(path[index].x-offset, path[index].z-offset));
-		// 	tarArea.Add(new Point(path[index].x+offset, path[index].z+offset));
-		// }
 		Debug.Log("index: "+index+"(" + path[index].x+", "+path[index].z+")");
 		transform.position = new Vector3(path[index].x, 2.5f, path[index++].z);
 	}
@@ -158,9 +141,6 @@ public class RobotFreeAnim : MonoBehaviour {
 			added = true;
 		}
 		CheckKey();
-		// if(anim.GetBool("Roll_Anim")){
-		// 	forward1(rollSpeed);
-		// }
 		gameObject.transform.eulerAngles = rot;
 		if(mode == 0){
 			Rotation();
@@ -195,63 +175,14 @@ public class RobotFreeAnim : MonoBehaviour {
 		}
 	}
 
-	void forward1(float speed)
-    {
-		Vector3 robot_direction = Vector3.Normalize(
-			transform.TransformPoint(d1.transform.position) - transform.TransformPoint(d2.transform.position)
-		);
-		// Debug.Log(robot_direction);
-		transform.Translate(robot_direction * Time.deltaTime * speed);
-	}
-
 	void forward2(float speed)
 	{
 		anim.SetBool("Walk_Anim", true);
-		// transform.position += transform.forward*Time.deltaTime*speed;
-		// float vertical = Input.GetAxis("Vertical");
-		// float horizontal = Input.GetAxis("Horizontal");
-		// transform.Translate(new Vector3(horizontal, 0, vertical) * Time.deltaTime * speed);
         transform.Translate(Vector3.forward*Time.deltaTime * speed);
 	}
 
 	void CheckKey()
 	{
-		// Walk
-		// if (Input.GetKey(KeyCode.W))
-		// {
-		// 	anim.SetBool("Walk_Anim", true);
-		// 	forward2(normalSpeed);
-			
-		// }
-		// else if (Input.GetKeyUp(KeyCode.W))
-		// {
-		// 	anim.SetBool("Walk_Anim", false);
-		// }
-
-		// // Rotate Left
-		// if (Input.GetKey(KeyCode.A))
-		// {
-		// 	rot[1] -= rotSpeed * Time.fixedDeltaTime;
-		// }
-
-		// // Rotate Right
-		// if (Input.GetKey(KeyCode.D))
-		// {
-		// 	rot[1] += rotSpeed * Time.fixedDeltaTime;
-		// }
-
-		// // Roll
-		// if (Input.GetKeyDown(KeyCode.S))
-		// {
-		// 	if (anim.GetBool("Roll_Anim"))
-		// 	{
-		// 		anim.SetBool("Roll_Anim", false);
-		// 	}
-		// 	else
-		// 	{
-		// 		anim.SetBool("Roll_Anim", true);
-		// 	}
-		// }
 
 		if (Input.GetKeyDown(KeyCode.Space))
         {

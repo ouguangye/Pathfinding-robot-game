@@ -11,8 +11,6 @@ public class camera : MonoBehaviour
     float heightDamping = 2.0f;
     float rotationDamping = 3.0f;
 
-
-
     public GameObject cube;
     private int num = 100; 
 
@@ -20,66 +18,95 @@ public class camera : MonoBehaviour
 
     float cubeLength;
 
-    public List<Vector3> all_objects_loc_list;
+    int[,] map;
+
+    // 传入的x,z 是中心点坐标
+    Vector3 mapToPoint(int i, int j) {
+        return new Vector3((i-10)*10,2.5f,(j-9)*10);
+    }
+
+    // 接收物体的x, z值
+    void pointFillMap(float x, float z) {
+        // 将中心坐标转换为左上角的坐标
+        int point_x = (int)(x - cubeLength/2);
+        int point_z = (int)(z + cubeLength/2);
+        map[point_x/10+10, point_z/10+9] = 1;
+    }
 
     // Use this for initialization
     void Start()
     {
 
+        // 获取各个物体的大小
         cubeLength = cube.transform.GetComponent<Renderer>().bounds.size.x;
-        all_objects_loc_list = new List<Vector3>();
 
+        Vector3 size = target.transform.GetComponent<BoxCollider>().bounds.size;
+        Debug.Log("size: " + size);
+
+        // 初始化map, 一律统计方块左上角的点
+        map = new int[20,20];
+
+        // 对于目标节点， 在地图的四个角的任意一个角上
         int index = Random.Range(0, 4);
-        int remote_loc = 90;
-        int[,] remote_loc_list = new int[,] { { remote_loc, remote_loc }, { -remote_loc, remote_loc }, { remote_loc, -remote_loc }, { -remote_loc, remote_loc } };
-        distinationObject.transform.position = new Vector3(remote_loc_list[index, 0], 2.5f, remote_loc_list[index, 1]);
-  
-        all_objects_loc_list.Add(distinationObject.transform.position);
-        all_objects_loc_list.Add(target.position);
-
-        // Debug.Log("length: " + cubeLength);
         
+        int[,] remote_loc_list = new int[,] {
+           {0,0},{0,19},{19,0},{19,19}
+        };
+
+        distinationObject.transform.position = mapToPoint(remote_loc_list[index,0], remote_loc_list[index, 1]);
+        target.transform.position = mapToPoint(remote_loc_list[3-index,0], remote_loc_list[3-index, 1]);
+
+        map[remote_loc_list[index,0], remote_loc_list[index, 1]] = 1;
+        map[remote_loc_list[3-index,0], remote_loc_list[3-index, 1]] = 1;
+        
+
+        // 生成静态障碍物
         for(int i = 0;i < num; i++)
         {
-            float x;
-            float z;
-
+            int x;
+            int z;
             
             while (true)
             {
-                x = Random.Range(-95, 95);
-                z = Random.Range(-95, 95);
-                bool flag = true;
-                
-                foreach(Vector3 v in all_objects_loc_list)
-                {
-                    if (Mathf.Abs(x-v.x) >= Mathf.Sqrt(2)*cubeLength ||
-                        Mathf.Abs(z - v.z) >= Mathf.Sqrt(2) * cubeLength
-                        )
-                    {
-                        continue;
-                    }
-                    if ((x - v.x)* (x - v.x) + (z - v.z) * (z - v.z) >= 2*cubeLength* cubeLength)
-                    {
-                        continue;
-                    }
-                    flag = false;
-                    break;
-                }
-                
-                if (flag)
-                {
-                    break;
-                }
+                x = Random.Range(0, 19);
+                z = Random.Range(0, 19);
+                if(map[x,z] == 0) break;
             }
 
-            Vector3 instantiate_loc = new Vector3(x, 2.5f, z);
             Instantiate(
                 cube, 
-                instantiate_loc, 
+                mapToPoint(x,z), 
                 Quaternion.identity
-             );
-            all_objects_loc_list.Add(instantiate_loc);
+            );
+            map[x,z] = 1;
+        }
+
+        // 生成动态障碍物
+        int maxLen = 0;
+        int max_i, max_j;
+        for(int i = 0;i<20;i++) {
+            int len = 0;
+            bool flag = false;
+            for(int j = 0 ; j<20;j++) {
+                if(map[i,j] == 0){
+                    if(!flag) continue;
+                    if(len <= maxLen) {
+                        len = 0;
+                    }
+                    else {
+                        maxLen = len;
+                        max_i = i;
+                        max_j = j;
+                    }
+                }
+                flag = true;
+                len++;
+            }
+            if(len > maxLen) {
+                maxLen = len;
+                max_i = i;
+                max_j = 19;
+            }
         }
     }
 
@@ -94,7 +121,7 @@ public class camera : MonoBehaviour
         {
             return;
         }
-        
+
         float wantedRotationAngle = target.eulerAngles.y+offsetAngleY;     //调整相机观察的角度setAngleY
         float wantedHeight = target.position.y + height;
         float currentRotationAngle = transform.eulerAngles.y;
