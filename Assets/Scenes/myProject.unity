@@ -465,8 +465,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 0.18109581, y: 0.1, z: 0.161886}
-  m_Center: {x: 0.0022116045, y: 0.05, z: 0.00094306475}
+  m_Size: {x: 0.18109581, y: 0.10000001, z: 0.18504219}
+  m_Center: {x: 0.0022116073, y: 0.050000004, z: -0.0024283573}
 --- !u!1 &817741191
 GameObject:
   m_ObjectHideFlags: 0
@@ -576,7 +576,7 @@ MonoBehaviour:
   mapsize: 10
   target: {fileID: 455109227}
   distance: 8
-  height: 5
+  height: 3
   offsetAngleY: 0
   cube: {fileID: 8352025023409568987, guid: 535f355be8c37cb47968747ae88e8351, type: 3}
   movingCube: {fileID: 8352025023409568987, guid: ca2bb8a3bbf369846b3b65a54678084c, type: 3}
