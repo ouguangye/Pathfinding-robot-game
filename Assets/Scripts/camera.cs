@@ -137,9 +137,10 @@ public class camera : MonoBehaviour
         target.transform.position = robot_map.mapToPoint(remote_loc_list[3-index,0], remote_loc_list[3-index, 1], 0);
 
         // 设置终点为1， 以及周围两个点也为1
+        Debug.Log("destination point: " +  remote_loc_list[index,0] + " " + remote_loc_list[index, 1]);
         robot_map.map[remote_loc_list[index,0], remote_loc_list[index, 1]] = 1;
-        robot_map.map[remote_loc_list[index,0]-1, remote_loc_list[index, 1]] = 1;
-        robot_map.map[remote_loc_list[index,0], remote_loc_list[index, 1]-1] = 1;
+        robot_map.map[remote_loc_list[index,0] + (index < 2? 1: -1) , remote_loc_list[index, 1]] = 1;
+        robot_map.map[remote_loc_list[index,0], remote_loc_list[index, 1] + (index % 2 == 0 ? 1: -1)] = 1;
 
         robot_map.map[remote_loc_list[3-index,0], remote_loc_list[3-index, 1]] = 1;
         
@@ -150,7 +151,8 @@ public class camera : MonoBehaviour
         // 生成静态障碍物
         buildStatiObstacles();
 
-        Debug.Log("num: " + mapsize + " " + cubeLength + " " + (int)mapsize*mapsize/(cubeLength*cubeLength*4));
+        // 生成动态障碍物
+        // Debug.Log("num: " + mapsize + " " + cubeLength + " " + (int)mapsize*mapsize/(cubeLength*cubeLength*4));
         for(int i=0;i<(int)mapsize*mapsize/(cubeLength*cubeLength*4);i++) {
             createHorizontalMoveObstract();
             createVerticalMoveObstract();

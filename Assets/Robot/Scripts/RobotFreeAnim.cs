@@ -30,9 +30,6 @@ public class RobotFreeAnim : MonoBehaviour {
 	Animator anim;
 	float normalSpeed;
 
-	// 滚动的变量
-	float rollSpeed = 10f;
-
 	// 目标位置
 	List<Vector3> distinationVector = new List<Vector3>();
 
