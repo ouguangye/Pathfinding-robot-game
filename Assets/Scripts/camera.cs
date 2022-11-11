@@ -20,7 +20,11 @@ public class camera : MonoBehaviour
 
     // 静态障碍物预设体
     public GameObject cube;
+    // 动态障碍物 预设体
     public GameObject movingCube;
+    // 墙体 预设体
+    public GameObject wallCube;
+
     // 终点
     public GameObject distinationObject;
 
@@ -50,36 +54,42 @@ public class camera : MonoBehaviour
         m_cube.GetComponent<movingObstacle>().endPoint = robot_map.mapToPoint((int)res[1],(int)res[0]);
     }
 
-    // Use this for initialization
-    void Start()
-    {
+    void buildWall() {
+        // 上
+        for(int i = -1;i<=mapsize;i++) {
+            Instantiate(
+                wallCube, 
+                robot_map.mapToPoint(i,mapsize), 
+                Quaternion.identity
+            );
+        }
+        // 下 
+        for(int i = -1;i<=mapsize;i++) {
+            Instantiate(
+                wallCube, 
+                robot_map.mapToPoint(i,-1), 
+                Quaternion.identity
+            );
+        }
+        // 左
+        for(int i = 0;i<mapsize;i++) {
+            Instantiate(
+                wallCube, 
+                robot_map.mapToPoint(-1,i), 
+                Quaternion.identity
+            );
+        }
+        // 右
+        for(int i = 0;i<mapsize;i++) {
+            Instantiate(
+                wallCube, 
+                robot_map.mapToPoint(mapsize,i), 
+                Quaternion.identity
+            );
+        }
+    }
 
-        // 获取各个物体的大小
-        cubeLength = cube.transform.GetComponent<Renderer>().bounds.size.x;
-
-        Vector3 size = target.transform.GetComponent<BoxCollider>().bounds.size;
-        Debug.Log("size: " + size);
-
-        // 初始化map
-        robot_map = new RobotMap(mapsize, (int)cubeLength);
-        robot_map.map = new int[mapsize,mapsize];
-
-        obstacleNum = mapsize*mapsize/5;
-
-        // 对于目标节点， 在地图的四个角的任意一个角上
-        int index = Random.Range(0, 4);
-        int[,] remote_loc_list = new int[,] {
-           {0,0},{0,mapsize-1},{mapsize-1,0},{mapsize-1,mapsize-1}
-        };
-
-        distinationObject.transform.position = robot_map.mapToPoint(remote_loc_list[index,0], remote_loc_list[index, 1]);
-        target.transform.position = robot_map.mapToPoint(remote_loc_list[3-index,0], remote_loc_list[3-index, 1]);
-
-        robot_map.map[remote_loc_list[index,0], remote_loc_list[index, 1]] = 1;
-        robot_map.map[remote_loc_list[3-index,0], remote_loc_list[3-index, 1]] = 1;
-        
-
-        // 生成静态障碍物
+    void buildStatiObstacles() {
         for(int i = 0;i < obstacleNum; i++)
         {
             int x;
@@ -99,9 +109,49 @@ public class camera : MonoBehaviour
             );
             robot_map.map[x,z] = 1;
         }
+    }
 
-        // 生成4个动态障碍物
-        for(int i=0;i<2;i++) {
+    // Use this for initialization
+    void Start()
+    {
+
+        // 获取各个物体的大小
+        cubeLength = cube.transform.GetComponent<Renderer>().bounds.size.x;
+        Debug.Log("cube size: " + cubeLength);
+        Vector3 size = target.transform.GetComponent<BoxCollider>().bounds.size;
+        Debug.Log("robot size: " + size);
+
+        // 初始化map
+        robot_map = new RobotMap(mapsize, (int)cubeLength);
+        robot_map.map = new int[mapsize,mapsize];
+
+        obstacleNum = mapsize*mapsize/5;
+
+        // 对于目标节点， 在地图的四个角的任意一个角上
+        int index = Random.Range(0, 4);
+        int[,] remote_loc_list = new int[,] {
+           {0,0},{0,mapsize-1},{mapsize-1,0},{mapsize-1,mapsize-1}
+        };
+
+        distinationObject.transform.position = robot_map.mapToPoint(remote_loc_list[index,0], remote_loc_list[index, 1]);
+        target.transform.position = robot_map.mapToPoint(remote_loc_list[3-index,0], remote_loc_list[3-index, 1], 0);
+
+        // 设置终点为1， 以及周围两个点也为1
+        robot_map.map[remote_loc_list[index,0], remote_loc_list[index, 1]] = 1;
+        robot_map.map[remote_loc_list[index,0]-1, remote_loc_list[index, 1]] = 1;
+        robot_map.map[remote_loc_list[index,0], remote_loc_list[index, 1]-1] = 1;
+
+        robot_map.map[remote_loc_list[3-index,0], remote_loc_list[3-index, 1]] = 1;
+        
+
+        // 生成墙
+        buildWall();
+
+        // 生成静态障碍物
+        buildStatiObstacles();
+
+        Debug.Log("num: " + mapsize + " " + cubeLength + " " + (int)mapsize*mapsize/(cubeLength*cubeLength*4));
+        for(int i=0;i<(int)mapsize*mapsize/(cubeLength*cubeLength*4);i++) {
             createHorizontalMoveObstract();
             createVerticalMoveObstract();
         }
@@ -112,6 +162,7 @@ public class camera : MonoBehaviour
         
     }
  
+    // 相机追踪机制
     void LateUpdate()
     {
         if(!target)      //保护机制，为空直接结束

@@ -237,7 +237,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &150118741
 MonoBehaviour:
@@ -416,7 +416,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 241298989}
   m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 180, z: 0}
+  m_LocalPosition: {x: 0, y: 60, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -465,8 +465,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 0.17694339, y: 0.1, z: 0.13809279}
-  m_Center: {x: 0.011528294, y: 0.05, z: -0.010953569}
+  m_Size: {x: 0.18109581, y: 0.1, z: 0.161886}
+  m_Center: {x: 0.0022116045, y: 0.05, z: 0.00094306475}
 --- !u!1 &817741191
 GameObject:
   m_ObjectHideFlags: 0
@@ -573,13 +573,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e8cef6bd82107048beb833bc6935c8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapsize: 15
+  mapsize: 10
   target: {fileID: 455109227}
-  distance: 10
+  distance: 8
   height: 5
   offsetAngleY: 0
   cube: {fileID: 8352025023409568987, guid: 535f355be8c37cb47968747ae88e8351, type: 3}
   movingCube: {fileID: 8352025023409568987, guid: ca2bb8a3bbf369846b3b65a54678084c, type: 3}
+  wallCube: {fileID: 8352025023409568987, guid: 23df699c559079341aec19ddeb8bee3f, type: 3}
   distinationObject: {fileID: 283417143}
 --- !u!1001 &952468987
 PrefabInstance:
@@ -927,7 +928,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6641619243423624504, guid: 535f355be8c37cb47968747ae88e8351, type: 3}
       propertyPath: m_RootOrder
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 6641619243423624504, guid: 535f355be8c37cb47968747ae88e8351, type: 3}
       propertyPath: m_LocalPosition.x

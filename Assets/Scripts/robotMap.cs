@@ -23,6 +23,10 @@ public class RobotMap {
         return new Vector3((i-mapsize/2)*cubeLength+cubeLength/2,2.5f,(j-mapsize/2+1)*cubeLength-cubeLength/2);
     }
 
+    public Vector3 mapToPoint(int i, int j, float y) {
+        return new Vector3((i-mapsize/2)*cubeLength+cubeLength/2,y,(j-mapsize/2+1)*cubeLength-cubeLength/2);
+    }
+
     // 接收物体的x, z值
     public void pointFillMap(float x, float z) {
         // 将中心坐标转换为左上角的坐标
