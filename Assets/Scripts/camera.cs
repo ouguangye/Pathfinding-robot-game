@@ -5,7 +5,7 @@ using UnityEngine;
 public class camera : MonoBehaviour
 {
     // 地图大小
-    public int mapsize = 20;
+    public int mapsize=20;
     
     // 障碍物数量
     private int obstacleNum; 
@@ -57,11 +57,12 @@ public class camera : MonoBehaviour
     void buildWall() {
         // 上
         for(int i = -1;i<=mapsize;i++) {
-            Instantiate(
+            GameObject w_cube = Instantiate(
                 wallCube, 
                 robot_map.mapToPoint(i,mapsize), 
                 Quaternion.identity
             );
+            w_cube.transform.parent = wallCube.transform.parent;
         }
         // 下 
         for(int i = -1;i<=mapsize;i++) {
@@ -114,6 +115,8 @@ public class camera : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+
+        mapsize = globalVariable.mapsize;
 
         // 获取各个物体的大小
         cubeLength = cube.transform.GetComponent<Renderer>().bounds.size.x;

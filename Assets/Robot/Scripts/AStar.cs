@@ -27,24 +27,25 @@ public class Point{
 }
 
 public class AStar{
-	private GameObject[] blocks;
+	private List<Vector3> blocks;
 	private List<Point> openlist = new List<Point>();
 	private List<Point> closelist = new List<Point>();
 	private int[,] maze = new int[400, 400];
 	private float[,] dirs = {{0.5f,0},{-0.5f,0},{0,0.5f},{0,-0.5f}};
 	public string logg;
-	public AStar(){
-		blocks = GameObject.FindGameObjectsWithTag("Obstacle");
+	public AStar(List<Vector3> blocks){
+		// blocks = GameObject.FindGameObjectsWithTag("Obstacle");
+        this.blocks = blocks;
 		for(int z = 0; z < 400; ++z){
 			for(int x = 0; x < 400; ++x){
 				maze[z, x] = 0;
 			}
 		}
-		foreach(GameObject block in blocks){
+		foreach(Vector3 block in blocks){
 			int offset = 7;
 			for(float x = -offset; x <= offset; x += 0.5f){
 				for(float z = -offset; z <= offset; z += 0.5f){
-					Point temp = new Point(block.transform.position.x + x, block.transform.position.z + z);
+					Point temp = new Point(block.x + x, block.z + z);
 					if(temp.z < -100f)
 						temp.z = -100f;
 					if(temp.x < -100f)

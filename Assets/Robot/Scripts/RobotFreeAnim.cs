@@ -11,14 +11,12 @@ public class RobotFreeAnim : MonoBehaviour {
 	public APF apf = new APF();
 	Vector3 tarRot = Vector3.zero;
 
-	// 使用A星
-	public AStar astar;
 	List<Point> path;
 	List<Point> tarArea = new List<Point>();
 	int index = 0;
 
 	// 获取目标位置
-	bool added = false;
+	int added = 0;
 	GameObject distination;
 
 	// 双相机对象
@@ -109,36 +107,73 @@ public class RobotFreeAnim : MonoBehaviour {
 		}
 	}
 
+    IEnumerator findPathByAStarBefore() {
+        Debug.Log("enter IEnumerator1");
+        GameObject[] blocks = GameObject.FindGameObjectsWithTag("Obstacle");
+        List<Vector3> blocks_positions = new List<Vector3>();
+
+        foreach(GameObject block in blocks) {
+            blocks_positions.Add(block.transform.position);
+        }
+        ThreadManager threadManager = new ThreadManager(
+            transform.position.x, 
+            transform.position.z,
+            distination.transform.position.x,
+            distination.transform.position.z, 
+            blocks_positions
+        );
+        threadManager.Start();
+        Debug.Log("enter IEnumerator2");
+        while(!threadManager.isOver){
+            yield return new WaitForEndOfFrame();
+        }
+
+        path = threadManager.getPath();
+        added = 1;
+		if(path.Count == 0) {
+            Debug.Log("Wrong");
+        }
+        yield return null;
+    }
+
 	// Use this for initialization
 	void Awake(){
 		anim = gameObject.GetComponent<Animator>();
 		gameObject.transform.eulerAngles = rot;
 		tarRot = rot;
 		normalSpeed = this.mode == 1? 0.4f:6f;
+
+        distination = GameObject.FindGameObjectsWithTag("Destination")[0];
+        distinationVector.Add(new Vector3(distination.transform.position.x, 2.5f, distination.transform.position.z));
 	}
+
+
+    void Start() {
+        mode = globalVariable.mode;
+    }
 
 	// Update is called once per frame
 	void Update(){
-		if(!added){
-			distination = GameObject.FindGameObjectsWithTag("Destination")[0];
-			if(mode == 1){
-				astar = new AStar();
-				path = astar.getPath(new Point(transform.position.x, transform.position.z),
-				new Point(distination.transform.position.x, distination.transform.position.z));
-				if(path.Count == 0) Debug.Log("Wrong");
-			}
-			if(mode == 2){
-				astar = new AStar();
-				path = astar.getPath(new Point(transform.position.x, transform.position.z),
-				new Point(distination.transform.position.x, distination.transform.position.z));
-				if(path.Count == 0) Debug.Log("Wrong");
-				MixInit();
-			}
-			distinationVector.Add(new Vector3(distination.transform.position.x, 2.5f, distination.transform.position.z));
-			added = true;
-		}
-		CheckKey();
+        CheckKey();
 		gameObject.transform.eulerAngles = rot;
+
+		if(added == 0){
+            if(mode == 0) {
+                added = 2;
+            }
+			else {
+				StartCoroutine("findPathByAStarBefore");		
+			}
+			return;
+		}
+
+        if(added == 1) {
+            if(mode == 2) {
+                MixInit();
+                added = 2;
+            }
+        }
+		
 		if(mode == 0){
 			Rotation();
 			forward2(normalSpeed);

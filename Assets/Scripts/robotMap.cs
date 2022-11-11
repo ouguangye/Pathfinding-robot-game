@@ -18,7 +18,7 @@ public class RobotMap {
         this.cubeLength = cubeLength;
     }
 
-    // 传入二维数据的i,j值，放回物体的中心坐标
+    // 传入二维数据的i,j值，返回物体的中心坐标
     public Vector3 mapToPoint(int i, int j) {
         return new Vector3((i-mapsize/2)*cubeLength+cubeLength/2,2.5f,(j-mapsize/2+1)*cubeLength-cubeLength/2);
     }
@@ -27,13 +27,14 @@ public class RobotMap {
         return new Vector3((i-mapsize/2)*cubeLength+cubeLength/2,y,(j-mapsize/2+1)*cubeLength-cubeLength/2);
     }
 
-    // 接收物体的x, z值
-    public void pointFillMap(float x, float z) {
+    // 接收物体中心的 x, z坐标， 返回地图上的 i,j位置
+    public Vector2 pointFillMap(float x, float z) {
         // 将中心坐标转换为左上角的坐标
-        int point_x = (int)(x - cubeLength/2);
-        int point_z = (int)(z + cubeLength/2);
+        float point_x = x - cubeLength/2;
+        float point_z = z + cubeLength/2;
 
-        map[point_x/(int)cubeLength+mapsize/2, point_z/(int)cubeLength+mapsize/2-1] = 1;
+        // map[point_x/(int)cubeLength+mapsize/2, point_z/(int)cubeLength+mapsize/2-1] = 1;
+        return new Vector2(point_x/cubeLength+mapsize/2, point_z/cubeLength+mapsize/2-1);
     }
 
     public Vector3 findLongestPathFromHorizontal() {
