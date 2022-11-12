@@ -9,7 +9,7 @@ public class skyCamera : MonoBehaviour
 
     // mapsize 20 -> Field of View 63, mapsize 10 -> Field of View 35
     int viewPortAccordingToMapSize(int size){
-        return (int)(7.0/85.0 * size* size + (63-400*7.0/85.0)) + 5;
+        return (int)(7.0/85.0 * size* size + (63-400*7.0/85.0));
     }
 
     void Start()

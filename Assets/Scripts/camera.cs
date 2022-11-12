@@ -31,7 +31,7 @@ public class camera : MonoBehaviour
     // 障碍物的长度大小
     private float cubeLength;
 
-    RobotMap robot_map;
+    public RobotMap robot_map;
 
     void createHorizontalMoveObstract() {
         Vector3 res =  robot_map.findLongestPathFromHorizontal();
@@ -128,7 +128,7 @@ public class camera : MonoBehaviour
         robot_map = new RobotMap(mapsize, (int)cubeLength);
         robot_map.map = new int[mapsize,mapsize];
 
-        obstacleNum = mapsize*mapsize/5;
+        obstacleNum = mapsize*mapsize/10;
 
         // 对于目标节点， 在地图的四个角的任意一个角上
         int index = Random.Range(0, 4);
@@ -137,15 +137,15 @@ public class camera : MonoBehaviour
         };
 
         distinationObject.transform.position = robot_map.mapToPoint(remote_loc_list[index,0], remote_loc_list[index, 1]);
-        target.transform.position = robot_map.mapToPoint(remote_loc_list[3-index,0], remote_loc_list[3-index, 1], 0);
+        target.transform.position = robot_map.mapToPoint(remote_loc_list[3-index,0], remote_loc_list[3-index, 1], target.transform.position.y);
 
         // 设置终点为1， 以及周围两个点也为1
         Debug.Log("destination point: " +  remote_loc_list[index,0] + " " + remote_loc_list[index, 1]);
-        robot_map.map[remote_loc_list[index,0], remote_loc_list[index, 1]] = 1;
-        robot_map.map[remote_loc_list[index,0] + (index < 2? 1: -1) , remote_loc_list[index, 1]] = 1;
-        robot_map.map[remote_loc_list[index,0], remote_loc_list[index, 1] + (index % 2 == 0 ? 1: -1)] = 1;
+        robot_map.map[remote_loc_list[index,0], remote_loc_list[index, 1]] = 3;
+        robot_map.map[remote_loc_list[index,0] + (index < 2? 1: -1) , remote_loc_list[index, 1]] = 3;
+        robot_map.map[remote_loc_list[index,0], remote_loc_list[index, 1] + (index % 2 == 0 ? 1: -1)] = 3;
 
-        robot_map.map[remote_loc_list[3-index,0], remote_loc_list[3-index, 1]] = 1;
+        robot_map.map[remote_loc_list[3-index,0], remote_loc_list[3-index, 1]] = 3;
         
 
         // 生成墙

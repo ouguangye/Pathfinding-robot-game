@@ -1,15 +1,17 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class RobotFreeAnim : MonoBehaviour {
 
 	// 决定使用何种方法
 	public int mode = 0; // 0 -> APF, 1 -> AStar, 2 -> Mix
+	int pathAcc = 1;
 
 	// 使用人工势场法
-	public APF apf = new APF();
-	Vector3 tarRot = Vector3.zero;
+	public APF apf;
+	Vector3 tarDir = Vector3.zero;
 
 	List<Point> path;
 	List<Point> tarArea = new List<Point>();
@@ -19,12 +21,22 @@ public class RobotFreeAnim : MonoBehaviour {
 	int added = 0;
 	GameObject distination;
 
+    // A* 下一个目标的位置
+    private Vector3 nextDistination;
+
+    // 判断机器人是否已经找到目标
+    private bool isFinished = false;
+
 	// 双相机对象
 	public GameObject follow_camera;
 	public GameObject vertical_camera;
+
+    // 结束画面
+    public GameObject panel;
 	
-	Vector3 rot = Vector3.zero;
+	Vector3 rot;
 	float rotSpeed = 40f;
+	float period = 1;
 	Animator anim;
 	float normalSpeed;
 
@@ -40,7 +52,7 @@ public class RobotFreeAnim : MonoBehaviour {
 
 	// 射出射线检测，并画出射线
 	void Lookaround(Quaternion eulerAngle){
-		float distance = 40;
+		float distance = 10f;
 		RaycastHit hit;
 		if(Physics.Raycast(transform.position, eulerAngle * transform.forward, out hit, distance))
 			distance = Vector3.Distance(transform.position, hit.collider.gameObject.transform.position);
@@ -60,28 +72,46 @@ public class RobotFreeAnim : MonoBehaviour {
 			Lookaround(Quaternion.Euler(0,-1*subAngle*(i+1),0));
 			Lookaround(Quaternion.Euler(0,subAngle*(i+1),0));
 		}
-		tarRot[1] = Vector3.SignedAngle(Vector3.forward, apf.calF(transform.position, distinationVector[0], blockVectors), Vector3.up);
+		tarDir[1] = Vector3.SignedAngle(Vector3.forward, apf.calF(transform.position, distinationVector[0], blockVectors), Vector3.up);
+		Debug.Log("当前欧拉角："+transform.eulerAngles);
+		Debug.Log("目标角度："+tarDir);
 	}
 
 	// AStar部分
-	void Refresh(){
+	void forwardOfAStar(){
 		if(index == path.Count) return ;
-		Debug.Log("index: "+index+"(" + path[index].x+", "+path[index].z+")");
-		transform.position = new Vector3(path[index].x, 2.5f, path[index++].z);
+        if(isFinished) return;
+        anim.SetBool("Walk_Anim", true);
+        transform.LookAt(nextDistination);
+		transform.position = Vector3.MoveTowards(transform.position, nextDistination,normalSpeed*Time.deltaTime);
+        if(transform.position == nextDistination) {
+            ++index;
+            nextDistination = new Vector3(path[index].x, transform.position.y, path[index].z);
+            Debug.Log("index: "+index+"(" + nextDistination.x+", "+nextDistination.z); 
+        }
+	}
+
+    void forward(float speed)
+	{
+        if(isFinished) return;
+		anim.SetBool("Walk_Anim", true);
+        transform.Translate(Vector3.forward*Time.deltaTime * speed);
 	}
 
 	// Mix部分
 	void MixInit(){
 		// 只选取路径当中的部分点作为中间目标点
-		int pathAcc = 10;
+		pathAcc = follow_camera.GetComponent<camera>().robot_map.mapsize;
+		apf = new APF(pathAcc, follow_camera.GetComponent<camera>().robot_map.mapsize);
 		for (int i = 0; i < path.Count;++i){
 			if(i%(path.Count/pathAcc) == 0 && i != 0)
 				distinationVector.Add(new Vector3(path[i].x, transform.position.y, path[i].z));
 		}
+		distinationVector.Add(new Vector3(path[path.Count-1].x, transform.position.y, path[path.Count-1].z));
 	}
 
 	void MixCheck(){
-		int offset = 2;
+		int offset = 4;
 		if(distinationVector.Count == 0) return ;
 		if(transform.position.x > distinationVector[0].x - offset && transform.position.x < distinationVector[0].x + offset &&
 		transform.position.z > distinationVector[0].z - offset && transform.position.z < distinationVector[0].z + offset){
@@ -92,59 +122,62 @@ public class RobotFreeAnim : MonoBehaviour {
 
 	// 旋转
 	void Rotation(){
-		if(rot[1] != tarRot[1]){
-			Debug.Log("need rotate");
+		if(rot[1] != tarDir[1]){
 			if(mode == 1)
-				rot[1] = tarRot[1];
+				rot[1] = tarDir[1];
 			else{
-				if(Mathf.Abs(rot[1]-tarRot[1]) > 180f){
+				if(Mathf.Abs(rot[1]-tarDir[1]) > 180f){
 					rot[1] += rotSpeed * Time.fixedDeltaTime;
 				} else {
 					rot[1] -= rotSpeed * Time.fixedDeltaTime;
 				}
 			}
-
 		}
 	}
 
     IEnumerator findPathByAStarBefore() {
-        Debug.Log("enter IEnumerator1");
-        GameObject[] blocks = GameObject.FindGameObjectsWithTag("Obstacle");
-        List<Vector3> blocks_positions = new List<Vector3>();
-
-        foreach(GameObject block in blocks) {
-            blocks_positions.Add(block.transform.position);
-        }
         ThreadManager threadManager = new ThreadManager(
             transform.position.x, 
             transform.position.z,
             distination.transform.position.x,
             distination.transform.position.z, 
-            blocks_positions
+            follow_camera.GetComponent<camera>().robot_map
         );
         threadManager.Start();
-        Debug.Log("enter IEnumerator2");
         while(!threadManager.isOver){
             yield return new WaitForEndOfFrame();
         }
 
         path = threadManager.getPath();
+
         added = 1;
 		if(path.Count == 0) {
             Debug.Log("Wrong");
         }
+        else {
+            nextDistination = new Vector3(path[index].x, transform.position.y, path[index].z);
+            Debug.Log("index: "+index+"(" + nextDistination.x+", "+nextDistination.z);
+        }
         yield return null;
     }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.collider.tag == "Destination"){
+            anim.SetBool("Open_Anim", false);
+            isFinished = true;
+            panel.SetActive(true);
+        }
+    }
+
+
 
 	// Use this for initialization
 	void Awake(){
 		anim = gameObject.GetComponent<Animator>();
 		gameObject.transform.eulerAngles = rot;
-		tarRot = rot;
-		normalSpeed = this.mode == 1? 0.4f:6f;
-
-        distination = GameObject.FindGameObjectsWithTag("Destination")[0];
-        distinationVector.Add(new Vector3(distination.transform.position.x, 2.5f, distination.transform.position.z));
+		// normalSpeed = this.mode == 1? 0.4f:6f;
+        normalSpeed = 6f;
 	}
 
 
@@ -159,10 +192,14 @@ public class RobotFreeAnim : MonoBehaviour {
 
 		if(added == 0){
             if(mode == 0) {
+				distination = GameObject.FindGameObjectsWithTag("Destination")[0];
+        		distinationVector.Add(new Vector3(distination.transform.position.x, 2.5f, distination.transform.position.z));
+				apf = new APF(pathAcc, follow_camera.GetComponent<camera>().robot_map.mapsize);
                 added = 2;
             }
 			else {
-				StartCoroutine("findPathByAStarBefore");		
+				distination = GameObject.FindGameObjectsWithTag("Destination")[0];
+				StartCoroutine("findPathByAStarBefore");	
 			}
 			return;
 		}
@@ -176,42 +213,36 @@ public class RobotFreeAnim : MonoBehaviour {
 		
 		if(mode == 0){
 			Rotation();
-			forward2(normalSpeed);
+			forward(normalSpeed);
 			// 周期性使用射线检测前方物体
 			if(time == 0){
 				Look();
 			}
 			time += Time.deltaTime;
-			if(time >= 1){
+			if(time >= period){
 				time = 0;
 			}
 		} else if(mode == 1) {
-			if(time == 0)
-				Refresh();
+			forwardOfAStar();
 			time += Time.deltaTime;
-			if(time >= 0.1){
+			if(time >= period){
 				time = 0;
 			}
 		} else {
 			MixCheck();
 			Rotation();
-			forward2(normalSpeed);
+			forward(normalSpeed);
 			// 周期性使用射线检测前方物体
 			if(time == 0){
 				Look();
 			}
 			time += Time.deltaTime;
-			if(time >= 1){
+			if(time >= period){
 				time = 0;
 			}
 		}
 	}
 
-	void forward2(float speed)
-	{
-		anim.SetBool("Walk_Anim", true);
-        transform.Translate(Vector3.forward*Time.deltaTime * speed);
-	}
 
 	void CheckKey()
 	{

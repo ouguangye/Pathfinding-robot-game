@@ -3,17 +3,26 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class APF{
-    public float att_g = 20f;
-    public float rep_g = 10f;
-    public float d_goal = 20f;
+    public float att_size = 100f;
+    public float att_g;
+    public float rep_g = 1f;
+    public float Q = 5f;
+    public float d_goal = 10f;
+
+    public APF(int pathAcc, int mapsize){
+        att_g = att_size/((float)pathAcc)*(float)mapsize*10f;
+    }
     
     private Vector3 calAtt(Vector3 cur, Vector3 end){
         float r = Vector3.Distance(cur, end);
         Vector3 dir = Vector3.Normalize(cur-end);
+        Vector3 res;
         if(r <= d_goal)
-            return 0.5f * att_g * dir * r * r;
+            res = dir*att_g/r/r;
         else
-            return dir * (d_goal * att_g * r - 0.5f * att_g * d_goal * d_goal);
+            res = dir*att_g/d_goal/d_goal*r;
+        Debug.Log("引力: "+res);
+        return res;
     }
 
     private Vector3 calRep(Vector3 cur, List<Vector3> blocks, Vector3 tar){
@@ -22,13 +31,23 @@ public class APF{
             float r = Vector3.Distance(cur, end);
             float r_goal = Vector3.Distance(cur, tar);
             Vector3 dir = Vector3.Normalize(end-cur);
-            res += dir * 0.5f * rep_g * (1f/r - 1f/40f) * (1f/r - 1f/40f)*r_goal*r_goal/2f;
+            res += dir * rep_g / r / r;
         }
+        Debug.Log("斥力: "+res);
         return res;
     }
 
     public Vector3 calF(Vector3 cur, Vector3 dis, List<Vector3> blocks){
-        return calAtt(cur, dis) + calRep(cur, blocks, dis);
+        Vector3 res = calAtt(cur, dis) + calRep(cur, blocks, dis);
+        Debug.Log("合力: "+res);
+        int rand = Random.Range(0, 100);
+        // if(rand == 0)
+        //     return Vector3.right + res.normalized;
+        // if(rand == 1)
+        //     return Vector3.left + res.normalized;
+        // if(rand == 2)
+        //     return Vector3.forward + res.normalized;
+        return res;
     }
 
 }

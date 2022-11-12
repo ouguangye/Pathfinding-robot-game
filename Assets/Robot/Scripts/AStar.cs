@@ -7,136 +7,144 @@ public class Point{
 	public float F, G, H;
 	public Point parent;
 	public Point(float x, float z){
-		this.x = (float)(Mathf.Floor(x) + (x - Mathf.Floor(x) > 0 ? 0.5 : 0) + (x - Mathf.Floor(x) > 0.5 ? 0.5 : 0));
-		this.z = (float)(Mathf.Floor(z) + (z - Mathf.Floor(z) > 0 ? 0.5 : 0) + (z - Mathf.Floor(z) > 0.5 ? 0.5 : 0));
+		this.x = x;
+		this.z = z;
 		this.F = 0; 
 		this.G = 0;
 		this.H = 0;
 	}
 
-	public float CalG(Point previous){
-		float tempG = Vector2.Distance(new Vector2(previous.x, previous.z), 
+	public float CalG(Point previous = null){
+		if(previous == null)
+			return 0f;
+		float tempG = Vector2.Distance(new Vector2(previous.x, previous.z)*0.5f, 
 		new Vector2(this.x, this.z));
 		float g = tempG + previous.G;
+		this.G = g;
 		return g;
 	}
 
 	public float CalH(Point end){
-		return Mathf.Sqrt(Mathf.Pow(end.x - this.x, 2) + Mathf.Pow(end.z - this.z, 2));
+		H = Mathf.Sqrt(Mathf.Pow(end.x - this.x, 2) + Mathf.Pow(end.z - this.z, 2));
+		return H;
 	}
+
+	public float CalF(Point end, Point previous = null){
+		F = CalG(previous) + CalH(end);
+		return F;
+	}
+
+	// public static bool operator ==(Point a, Point b){
+	// 	if(a == null || b == null)
+	// 		return false;
+	// 	return a.x == b.x && a.z == b.z;
+	// }
+
+	// public static bool operator !=(Point a, Point b){
+	// 	if(a == null || b == null)
+	// 		return true;
+	// 	return a.x != b.x || b.z != a.z;
+	// }
 }
 
 public class AStar{
-	private List<Vector3> blocks;
+	RobotMap map;
 	private List<Point> openlist = new List<Point>();
 	private List<Point> closelist = new List<Point>();
-	private int[,] maze = new int[400, 400];
-	private float[,] dirs = {{0.5f,0},{-0.5f,0},{0,0.5f},{0,-0.5f}};
+	private int[,] dirs = {{1,0},{-1,0},{0,1},{0,-1}};
 	public string logg;
-	public AStar(List<Vector3> blocks){
-		// blocks = GameObject.FindGameObjectsWithTag("Obstacle");
-        this.blocks = blocks;
-		for(int z = 0; z < 400; ++z){
-			for(int x = 0; x < 400; ++x){
-				maze[z, x] = 0;
-			}
-		}
-		foreach(Vector3 block in blocks){
-			int offset = 7;
-			for(float x = -offset; x <= offset; x += 0.5f){
-				for(float z = -offset; z <= offset; z += 0.5f){
-					Point temp = new Point(block.x + x, block.z + z);
-					if(temp.z < -100f)
-						temp.z = -100f;
-					if(temp.x < -100f)
-						temp.x = -100f;
-					if(temp.x > 99.5f)
-						temp.x = 99.5f;
-					if(temp.z > 99.5f)
-						temp.z = 99.5f;
-					maze[(int)(temp.z*2)+200, (int)(temp.x*2)+200] = 1;
-				}
-			}
-		} 
+	
+	public AStar(RobotMap r_map){
+		map = r_map;
 	}
-	public Point getLeastFPoint(){
-		if(openlist.Count != 0){
-			Point res = openlist[0];
-			foreach(Point point in openlist){
-				if(point.F < res.F){
-					res = point;
-				}
-			}
-			return res;
+
+	private bool isInList_vec(List<Point> list, Point vec){
+		foreach(Point v in list){
+			if(v.x == vec.x && v.z == vec.z)
+				return true;
 		}
-		return null;
+		return false;
 	}
-	Point isInList(List<Point> list, Point point){
+
+	private Point isInlist(List<Point> list, Point cur){
 		foreach(Point p in list){
-			if(p.x == point.x && p.z == point.z){
+			if(p.x == cur.x && p.z == cur.z){
 				return p;
 			}
 		}
 		return null;
 	}
-	private bool isCanReach(Point cur, Point tar){
-		if(tar.x<-100f||tar.x>99.5f||tar.z<-100f||tar.z>99.5f||isInList(closelist, tar)!=null)
-			return false;
-		else if(maze[(int)(tar.z*2)+200, (int)(tar.x*2)+200] == 1)
-			return false;
-		return true;
+
+	private bool isCanReach(int i, int j){
+		return map.isCanReach(i, j) && !isInList_vec(closelist, new Point(map.mapToPoint(i,j).x, map.mapToPoint(i,j).z));
 	}
-	private List<Point> getSurround(Point point){
-		List<Point> res = new List<Point>();
+
+	private List<Vector2> getSurround(Vector2 cur){
+		List<Vector2> res = new List<Vector2>();
 		for(int i = 0;i<4;++i){
-			float x = point.x + dirs[i, 1];
-			float z = point.z + dirs[i, 0];
-			Point temp = new Point(x, z);
+			int x = (int)cur.x + dirs[i,0];
+			int y = (int)cur.y + dirs[i,1];
 			// Debug.Log("for point ("+ point.x +","+point.z+"), next is ("+ temp.x + "," + temp.z + ")");
-			if(isCanReach(point, temp)){
-				res.Add(temp);
+			if(isCanReach(x, y)){
+				res.Add(new Vector2(x,y));
 			}
 		}
 		return res;
 	}
+
+    Point getLeastFPoint()
+    {
+		if (openlist.Count!=0)
+        {
+            Point resPoint = openlist[0];
+            foreach(Point point in openlist)
+                if (point.F < resPoint.F)
+                    resPoint = point;
+            return resPoint;
+        }
+        return null;
+    }
+
+
 	public Point findPath(Point start, Point end){
+		Debug.Log("end: "+end.x+", "+end.z);
+		start.CalF(end);
 		openlist.Add(start); 
-		Debug.Log(end.x + "," + end.z);
 		int times = 0;
-		while(openlist.Count>0 && times++ < 100000){
-			Point curPoint = getLeastFPoint();
-			openlist.Remove(curPoint);
-			closelist.Add(curPoint);
-			List<Point> surround = getSurround(curPoint);
-			foreach (var s in surround){
-				if(isInList(openlist, s) == null){
-					s.parent = curPoint;
-					s.G = s.CalG(curPoint);
-					s.H = s.CalH(end);
-					s.F = s.G + s.H;
-					// Debug.Log("for point ("+curPoint.x+", "+ curPoint.z+ "), next (" + s.x + ", " + s.z + ")'s F = " + s.F);
+		while(openlist.Count>0 && times++ < 20000){
+			Point cur_point = getLeastFPoint();
+			Vector2 cur_vec = map.pointFillMap(cur_point.x, cur_point.z);
+			Debug.Log("current map loc:" + cur_vec);
+			openlist.Remove(cur_point);
+			closelist.Add(cur_point);
+			List<Vector2> surround = getSurround(cur_vec);
+			foreach (var s_vec in surround){
+				Point s = new Point(map.mapToPoint((int)s_vec.x, (int)s_vec.y).x, map.mapToPoint((int)s_vec.x, (int)s_vec.y).z);				
+				if(isInlist(openlist, s) == null){
+					s.parent = cur_point;
+					s.CalF(end, cur_point);
+					Debug.Log("for point ("+cur_point.x+", "+ cur_point.z+ "), next (" + s.x + ", " + s.z + ")'s F = " + s.F);
 					openlist.Add(s);
 				} else {
-					Point old = isInList(openlist, s);
-					if(old.G > s.CalG(curPoint)){
-						old.G = s.CalG(curPoint);
-						old.parent = curPoint;
-						old.F = old.G + old.H;
+					Point old = isInlist(openlist, s);
+					if(old.F>s.CalF(end, cur_point)){
+						old.parent = cur_point;
+						old.F = s.F;
 					}
 				}
 			}
-			Point resPoint = isInList(openlist, end);
-			if (resPoint != null){
-				Debug.Log(resPoint.x+", "+resPoint.z);
-				return resPoint;
+			Point res = isInlist(openlist, end);
+			if (res != null){
+				return res;
 			}
 		}
+		Debug.Log("Empty path");
 		return null;
 	}
+
 	public List<Point> getPath(Point start, Point end){
 		Point res = findPath(start, end);
 		List<Point> path = new List<Point>();
-		int loc = 0;
 		while(res!=null){
 			path.Add(res);
 			res = res.parent;
