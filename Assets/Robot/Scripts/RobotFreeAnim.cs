@@ -36,7 +36,7 @@ public class RobotFreeAnim : MonoBehaviour {
 	
 	Vector3 rot;
 	float rotSpeed = 40f;
-	float period = 1;
+	float period = 0.5f;
 	Animator anim;
 	float normalSpeed;
 
@@ -73,8 +73,8 @@ public class RobotFreeAnim : MonoBehaviour {
 			Lookaround(Quaternion.Euler(0,subAngle*(i+1),0));
 		}
 		tarDir[1] = Vector3.SignedAngle(Vector3.forward, apf.calF(transform.position, distinationVector[0], blockVectors), Vector3.up);
-		Debug.Log("当前欧拉角："+transform.eulerAngles);
-		Debug.Log("目标角度："+tarDir);
+		// Debug.Log("当前欧拉角："+transform.eulerAngles);
+		// Debug.Log("目标角度："+tarDir);
 	}
 
 	// AStar部分
